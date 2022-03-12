@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace a02_shopsystem.Model
 {
@@ -11,6 +12,7 @@ namespace a02_shopsystem.Model
 
         public int ShopId { get; set; }
 
+         [JsonIgnore]
         public virtual Shop Shop { get; set; } = null!;
     }
 }

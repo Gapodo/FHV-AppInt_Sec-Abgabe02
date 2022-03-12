@@ -16,79 +16,117 @@ namespace a02_shopsystem.Controllers
     public class ArticlesController : ControllerBase
     {
         private readonly ShopsystemContext _context;
+        private static Object ShopNotFoundContent = new { status = StatusCodes.Status404NotFound, title = "Not found", error = "No shop with the given id found." };
 
         public ArticlesController(ShopsystemContext context)
         {
             _context = context;
         }
 
-        // GET: api/Articles
-        [HttpGet("{shopId:int}/articles")]
-        public async Task<ActionResult<IEnumerable<ArticleDTO>>> GetArticles(int shopId)
+        // GET: api/shops/1/articles
+        [HttpGet("{shopId:int}/[controller]")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IEnumerable<ArticleDTO>>> GetArticles([FromRoute] int shopId)
         {
+            //TODO funktion für check auslagern?!
             if ((await _context.Shops.FindAsync(shopId)) != null)
             {
-                var articleDTOQuery = from article in _context.Articles
-                                      where article.ShopId == shopId
-                                      select new ArticleDTO()
-                                      {
-                                          Id = article.Id,
-                                          Name = article.Name,
-                                          EuroPrice = article.EuroPrice
-                                      };
-
-                return await articleDTOQuery.ToListAsync();
-            } else {
-                return NotFound(new { message = "Not found", error = "No shop with the given id found."});
+                return await _context.Articles.Where(a => a.ShopId == shopId).Select(a => new ArticleDTO()
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    EuroPrice = a.EuroPrice
+                }).ToListAsync();
+            }
+            else
+            {
+                return NotFound(ShopNotFoundContent);
             }
 
         }
 
-        // GET: api/Articles/5
+        // GET: api/shops/1/Articles/2
         [HttpGet("{shopId:int}/[controller]/{id:int}")]
-        public async Task<ActionResult<Article>> GetArticle(int id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ArticleDTO>> GetArticle([FromRoute] int shopId, [FromRoute] int id)
         {
-            var Article = await _context.Articles.FindAsync(id);
-
-            if (Article == null)
+            // TODO Auslagern?
+            if ((await _context.Shops.FindAsync(shopId)) != null)
             {
-                return NotFound();
-                // TODO nicer NotFound message (i.e. descriptive error)
-                // proves more difficult than anticipated
-            }
+                // var Article = await _context.Articles.FindAsync(id);
+                var Article = await _context.Articles.Where(a => a.ShopId == shopId && a.Id == id).Select(a => new ArticleDTO()
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    EuroPrice = a.EuroPrice
+                }).FirstAsync();
 
-            return Article;
+                if (Article == null)
+                {
+                    return NotFound();
+                    // TODO nicer NotFound message (i.e. descriptive error)
+                    // proves more difficult than anticipated
+                }
+
+                return Article;
+            }
+            return NotFound();
         }
 
-        // PUT: api/Articles/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/shops/1/Articles/2
         [HttpPut("{shopId}/[controller]/{id}")]
-        public async Task<IActionResult> PutArticle(int id, Article Article)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> PutArticle([FromRoute] int shopId, [FromRoute] int id, [FromBody] ArticleDTO ArticleDTO)
         {
-            if (id != Article.Id)
+            // TODO Auslagern?
+            if ((await _context.Shops.FindAsync(shopId)) != null)
             {
-                return BadRequest();
-            }
+                // compare url against body
+                if (id != ArticleDTO.Id)
+                {
+                    return BadRequest();
+                }
 
-            _context.Entry(Article).State = EntityState.Modified;
+                var Article = await _context.Articles.Where(a => a.ShopId == shopId).SingleOrDefaultAsync(b => b.Id == id);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ArticleExists(id))
+                // if search returned null there is either no item with that id or no item with that id within the shop
+                if (Article == null)
                 {
                     return NotFound();
                 }
-                else
+
+                Article.Name = ArticleDTO.Name;
+                Article.EuroPrice = ArticleDTO.EuroPrice;
+
+                _context.Entry(Article).State = EntityState.Modified;
+
+                try
                 {
-                    throw;
+                    await _context.SaveChangesAsync();
                 }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ArticleExists(id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return NoContent();
+            }
+            else
+            {
+                return NotFound(ShopNotFoundContent);
             }
 
-            return NoContent();
         }
 
         // POST: api/Articles
@@ -122,6 +160,11 @@ namespace a02_shopsystem.Controllers
         private bool ArticleExists(int id)
         {
             return _context.Articles.Any(e => e.Id == id);
+        }
+
+        private bool ArticleIdIsInShop(int shopId, int id)
+        {
+            return _context.Articles.Where(a => a.ShopId == shopId && a.Id == id).ToList().Count == 1;
         }
     }
 }
