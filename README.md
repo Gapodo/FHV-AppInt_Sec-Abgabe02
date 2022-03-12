@@ -14,5 +14,6 @@ Apply the Migrations using `dotnet ef database update`.
 ## Assumptions
 
 * we are not targeting RMM Level 3, while nice it's not common practice / common standard
-* An article cannot be moved to another store (i.e. the ShopId or Shop reference is immutable)
+* An article cannot be moved to another shop (i.e. the ShopId or Shop reference is immutable)
 * An article is only editable via it's respective shop (the shop always needs to be provided)
+* Deleting the shop cascades through to the articles (deleting the shop deletes it's contents)
