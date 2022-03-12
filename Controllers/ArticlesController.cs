@@ -137,9 +137,11 @@ namespace a02_shopsystem.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Article>> PostArticle([FromRoute] int shopId, [FromBody] ArticleDTO ArticleDTO)
         {
-            if ((await _context.Shops.FindAsync(shopId)) != null) {
+            if ((await _context.Shops.FindAsync(shopId)) != null)
+            {
 
-                if (ArticleDTO.Name.Trim().Length == 0 ) {
+                if (ArticleDTO.Name.Trim().Length == 0)
+                {
                     return BadRequest();
                 }
 
@@ -150,7 +152,7 @@ namespace a02_shopsystem.Controllers
                     ShopId = shopId
                 };
 
-                 _context.Articles.Add(article);
+                _context.Articles.Add(article);
                 await _context.SaveChangesAsync();
                 // update the dto for returning
                 ArticleDTO.Id = article.Id;
@@ -165,7 +167,8 @@ namespace a02_shopsystem.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteArticle([FromRoute] int shopId, [FromRoute] int id)
         {
-            if ((await _context.Shops.FindAsync(shopId)) != null) {
+            if ((await _context.Shops.FindAsync(shopId)) != null)
+            {
 
                 var Article = await _context.Articles.Where(a => a.ShopId == shopId && a.Id == id).FirstAsync();
 
@@ -185,11 +188,6 @@ namespace a02_shopsystem.Controllers
         private bool ArticleExists(int id)
         {
             return _context.Articles.Any(e => e.Id == id);
-        }
-
-        private bool ArticleIdIsInShop(int shopId, int id)
-        {
-            return _context.Articles.Where(a => a.ShopId == shopId && a.Id == id).ToList().Count == 1;
         }
     }
 }
