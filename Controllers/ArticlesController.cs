@@ -91,6 +91,11 @@ namespace a02_shopsystem.Controllers
                     return BadRequest();
                 }
 
+                if (articleDTO.Name.Trim().Length == 0)
+                {
+                    return BadRequest();
+                }
+
                 var article = await _context.Articles.Where(a => a.ShopId == shopId).SingleOrDefaultAsync(b => b.Id == id);
 
                 // if search returned null there is either no item with that id or no item with that id within the shop
