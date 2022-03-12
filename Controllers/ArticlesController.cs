@@ -1,9 +1,3 @@
-#nullable disable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using a02_shopsystem.Model;
@@ -11,8 +5,9 @@ using a02_shopsystem.DTO;
 
 namespace a02_shopsystem.Controllers
 {
-    [Route("api/shops/")]
+    [Route("api/shops/{shopId:int}/[controller]/")]
     [ApiController]
+    [Produces("application/json")]
     public class ArticlesController : ControllerBase
     {
         private readonly ShopsystemContext _context;
@@ -24,12 +19,11 @@ namespace a02_shopsystem.Controllers
         }
 
         // GET: api/shops/1/articles
-        [HttpGet("{shopId:int}/[controller]")]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<ArticleDTO>>> GetArticles([FromRoute] int shopId)
         {
-            //TODO funktion für check auslagern?!
             if ((await _context.Shops.FindAsync(shopId)) != null)
             {
                 return await _context.Articles.Where(a => a.ShopId == shopId).Select(a => new ArticleDTO()
@@ -43,16 +37,14 @@ namespace a02_shopsystem.Controllers
             {
                 return NotFound(ShopNotFoundContent);
             }
-
         }
 
         // GET: api/shops/1/Articles/2
-        [HttpGet("{shopId:int}/[controller]/{id:int}")]
+        [HttpGet("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ArticleDTO>> GetArticle([FromRoute] int shopId, [FromRoute] int id)
         {
-            // TODO Auslagern?
             if ((await _context.Shops.FindAsync(shopId)) != null)
             {
                 // var Article = await _context.Articles.FindAsync(id);
@@ -66,8 +58,6 @@ namespace a02_shopsystem.Controllers
                 if (article == null)
                 {
                     return NotFound();
-                    // TODO nicer NotFound message (i.e. descriptive error)
-                    // proves more difficult than anticipated
                 }
 
                 return article;
@@ -76,13 +66,12 @@ namespace a02_shopsystem.Controllers
         }
 
         // PUT: api/shops/1/Articles/2
-        [HttpPut("{shopId}/[controller]/{id}")]
+        [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> PutArticle([FromRoute] int shopId, [FromRoute] int id, [FromBody] ArticleDTO articleDTO)
         {
-            // TODO Auslagern?
             if ((await _context.Shops.FindAsync(shopId)) != null)
             {
                 // compare url against body
@@ -104,7 +93,7 @@ namespace a02_shopsystem.Controllers
                     return NotFound();
                 }
 
-                article.Name = articleDTO.Name;
+                article.Name = articleDTO.Name.Trim();
                 article.EuroPrice = articleDTO.EuroPrice;
 
                 _context.Entry(article).State = EntityState.Modified;
@@ -135,7 +124,7 @@ namespace a02_shopsystem.Controllers
         }
 
         // POST: api/shops/1/Articles
-        [HttpPost("{shopId:int}/[controller]")]
+        [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -151,7 +140,7 @@ namespace a02_shopsystem.Controllers
 
                 Article article = new Article()
                 {
-                    Name = articleDTO.Name,
+                    Name = articleDTO.Name.Trim(),
                     EuroPrice = articleDTO.EuroPrice,
                     ShopId = shopId
                 };
@@ -166,7 +155,7 @@ namespace a02_shopsystem.Controllers
         }
 
         // DELETE: api/shops/1/Articles/2
-        [HttpDelete("{shopId}/[controller]/{id}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteArticle([FromRoute] int shopId, [FromRoute] int id)
