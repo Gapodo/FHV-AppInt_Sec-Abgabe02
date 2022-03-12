@@ -1,9 +1,3 @@
-#nullable disable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using a02_shopsystem.Model;
@@ -13,10 +7,10 @@ namespace a02_shopsystem.Controllers
 {
     [Route("api/[controller]/")]
     [ApiController]
+    [Produces("application/json")]
     public class ShopsController : ControllerBase
     {
         private readonly ShopsystemContext _context;
-        private static Object ShopNotFoundContent = new { status = StatusCodes.Status404NotFound, title = "Not found", error = "No shop with the given id found." };
 
         public ShopsController(ShopsystemContext context)
         {
@@ -46,7 +40,7 @@ namespace a02_shopsystem.Controllers
             var shop = await _context.Shops.Select(a => new ShopDTO()
             {
                 Id = a.Id,
-                Name = a.Name,
+                Name = a.Name
             }).FirstOrDefaultAsync(s => s.Id == id);
 
             if (shop == null)
@@ -83,7 +77,7 @@ namespace a02_shopsystem.Controllers
                 return NotFound();
             }
 
-            shop.Name = shopDTO.Name;
+            shop.Name = shopDTO.Name.Trim();
 
             _context.Entry(shop).State = EntityState.Modified;
 
@@ -120,7 +114,7 @@ namespace a02_shopsystem.Controllers
 
             Shop shop = new Shop()
             {
-                Name = shopDTO.Name
+                Name = shopDTO.Name.Trim()
             };
 
             _context.Shops.Add(shop);
