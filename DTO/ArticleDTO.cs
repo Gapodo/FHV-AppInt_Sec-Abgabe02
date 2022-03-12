@@ -5,7 +5,7 @@ namespace a02_shopsystem.DTO
 {
     public partial class ArticleDTO
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public string Name { get; set; } = null!;
         public decimal EuroPrice { get; set; }
 

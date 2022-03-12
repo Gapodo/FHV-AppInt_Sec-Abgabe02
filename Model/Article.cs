@@ -12,7 +12,8 @@ namespace a02_shopsystem.Model
 
         public int ShopId { get; set; }
 
-         [JsonIgnore]
+        // needed to prevent loops while querying...
+        [JsonIgnore]
         public virtual Shop Shop { get; set; } = null!;
     }
 }

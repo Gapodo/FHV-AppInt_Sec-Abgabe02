@@ -11,7 +11,7 @@ using a02_shopsystem.DTO;
 
 namespace a02_shopsystem.Controllers
 {
-    [Route("api/shop/")]
+    [Route("api/shops/")]
     [ApiController]
     public class ArticlesController : ControllerBase
     {
@@ -129,32 +129,57 @@ namespace a02_shopsystem.Controllers
 
         }
 
-        // POST: api/Articles
+        // POST: api/shops/1/Articles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost("{shopId}/[controller]")]
+        [HttpPost("{shopId:int}/[controller]")]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<ActionResult<Article>> PostArticle(Article Article)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Article>> PostArticle([FromRoute] int shopId, [FromBody] ArticleDTO ArticleDTO)
         {
-            _context.Articles.Add(Article);
-            await _context.SaveChangesAsync();
+            if ((await _context.Shops.FindAsync(shopId)) != null) {
 
-            return CreatedAtAction("GetArticle", new { id = Article.Id }, Article);
+                if (ArticleDTO.Name.Trim().Length == 0 ) {
+                    return BadRequest();
+                }
+
+                Article article = new Article()
+                {
+                    Name = ArticleDTO.Name,
+                    EuroPrice = ArticleDTO.EuroPrice,
+                    ShopId = shopId
+                };
+
+                 _context.Articles.Add(article);
+                await _context.SaveChangesAsync();
+                // update the dto for returning
+                ArticleDTO.Id = article.Id;
+                return CreatedAtAction(nameof(GetArticle), new { id = article.Id, shopId = article.ShopId }, ArticleDTO);
+            }
+            return NotFound(ShopNotFoundContent);
         }
 
-        // DELETE: api/Articles/5
+        // DELETE: api/shops/1/Articles/2
         [HttpDelete("{shopId}/[controller]/{id}")]
-        public async Task<IActionResult> DeleteArticle(int id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteArticle([FromRoute] int shopId, [FromRoute] int id)
         {
-            var Article = await _context.Articles.FindAsync(id);
-            if (Article == null)
-            {
-                return NotFound();
+            if ((await _context.Shops.FindAsync(shopId)) != null) {
+
+                var Article = await _context.Articles.Where(a => a.ShopId == shopId && a.Id == id).FirstAsync();
+
+                if (Article == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Articles.Remove(Article);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Articles.Remove(Article);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return NotFound(ShopNotFoundContent);
         }
 
         private bool ArticleExists(int id)
