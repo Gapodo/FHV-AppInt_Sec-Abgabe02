@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
+
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace a02_shopsystem.Model
 {

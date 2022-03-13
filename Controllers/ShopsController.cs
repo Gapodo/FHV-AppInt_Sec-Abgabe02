@@ -21,13 +21,9 @@ namespace a02_shopsystem.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<ShopDTO>>> GetShops()
+        public async Task<ActionResult<IEnumerable<Shop>>> GetShops()
         {
-            return await _context.Shops.Select(a => new ShopDTO()
-            {
-                Id = a.Id,
-                Name = a.Name
-            }).ToListAsync();
+            return await _context.Shops.ToListAsync();
 
         }
 
@@ -35,13 +31,9 @@ namespace a02_shopsystem.Controllers
         [HttpGet("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ShopDTO>> GetShop([FromRoute] int id)
+        public async Task<ActionResult<Shop>> GetShop([FromRoute] int id)
         {
-            var shop = await _context.Shops.Select(a => new ShopDTO()
-            {
-                Id = a.Id,
-                Name = a.Name
-            }).FirstOrDefaultAsync(s => s.Id == id);
+            var shop = await _context.Shops.FindAsync(id);
 
             if (shop == null)
             {
@@ -56,28 +48,20 @@ namespace a02_shopsystem.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> PutShop([FromRoute] int id, [FromBody] ShopDTO shopDTO)
+        public async Task<IActionResult> PutShop([FromRoute] int id, [FromBody] Shop shop)
         {
             // compare url against body
-            if (id != shopDTO.Id)
+            if (id != shop.Id)
             {
                 return BadRequest();
             }
 
-            if (shopDTO.Name.Trim().Length == 0)
+            if (shop.Name.Trim().Length == 0)
             {
                 return BadRequest();
             }
 
-            var shop = await _context.Shops.SingleOrDefaultAsync(b => b.Id == id);
-
-            // if search returned null there is either no item with that id or no item with that id within the shop
-            if (shop == null)
-            {
-                return NotFound();
-            }
-
-            shop.Name = shopDTO.Name.Trim();
+            shop.Name = shop.Name.Trim();
 
             _context.Entry(shop).State = EntityState.Modified;
 
@@ -105,23 +89,22 @@ namespace a02_shopsystem.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Shop>> PostShop([FromBody] ShopDTO shopDTO)
+        public async Task<ActionResult<Shop>> PostShop([FromBody] ShopCreationDTO shopCreationDTO)
         {
-            if (shopDTO.Name.Trim().Length == 0)
+            if (shopCreationDTO.Name.Trim().Length == 0)
             {
                 return BadRequest();
             }
 
-            Shop shop = new Shop()
-            {
-                Name = shopDTO.Name.Trim()
+            Shop shop = new Shop() {
+                Name = shopCreationDTO.Name
             };
-
+            
             _context.Shops.Add(shop);
+
             await _context.SaveChangesAsync();
-            // update the dto for returning
-            shopDTO.Id = shop.Id;
-            return CreatedAtAction(nameof(GetShop), new { id = shop.Id }, shopDTO);
+            
+            return CreatedAtAction(nameof(GetShop), new { id = shop.Id }, shop);
         }
 
         // DELETE: api/shops/1
