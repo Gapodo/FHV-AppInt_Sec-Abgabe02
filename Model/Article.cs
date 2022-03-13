@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
 namespace a02_shopsystem.Model
@@ -10,6 +9,7 @@ namespace a02_shopsystem.Model
 
         public decimal EuroPrice { get; set; } = 0;
 
+        [JsonIgnore]
         public int ShopId { get; set; }
 
         // needed to prevent loops while querying...
